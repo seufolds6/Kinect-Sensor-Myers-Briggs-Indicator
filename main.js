@@ -26,27 +26,27 @@ var frames = {
                 console.log("Person seen");
 
                 // Head height
-                var head = frame["people"][0]["joints"][26]["position"]["z"]
+                var head = frame["people"][0]["joints"][26]["position"]["y"];
                 // LH height
-                var left_hand = frame["people"][0]["joints"][8]["position"]["z"]
+                var left_hand = frame["people"][0]["joints"][8]["position"]["y"];
                 // RH height
-                var right_hand = frame["people"][0]["joints"][15]["position"]["z"]
-                var hand_raised = left_hand > head || right_hand > head
+                var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
+                var hand_raised = left_hand < head || right_hand < head;
 
-                //--- for testing
-                console.log("------");
-                console.log("head: ", head);
-                console.log("left_hand: ", left_hand);
-                console.log("right_hand: ", right_hand);
-                console.log("hand_raised: ", hand_raised);
+                // //--- for testing
+                // console.log("------");
+                // console.log("head: ", head);
+                // console.log("left_hand: ", left_hand);
+                // console.log("right_hand: ", right_hand);
+                // console.log("hand_raised: ", hand_raised);
 
-                if (frame["people"][0]["joints"][26]["position"]["x"] < 0) {
-                    console.log("standing on left");
-                    standing_on_left = true;
-                } else {
-                    console.log("standing on right");
-                }
-                //---
+                // if (frame["people"][0]["joints"][26]["position"]["x"] > 0) {
+                //     console.log("standing on left");
+                //     standing_on_left = true;
+                // } else {
+                //     console.log("standing on right");
+                // }
+                // //---
 
 
                 // If on the start screen and hand is raised, go to first question
@@ -64,7 +64,7 @@ var frames = {
 
                     var standing_on_left = false;
                     // Check if standing to the left
-                    if (frame["people"][0]["joints"][26]["position"]["x"] < 0) {
+                    if (frame["people"][0]["joints"][26]["position"]["x"] > 0) {
                         console.log("standing on left");
                         standing_on_left = true;
                     } else {
