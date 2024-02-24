@@ -1,13 +1,19 @@
 // var host = "cpsc484-02.yale.internal:8888";
 var host = "10.67.73.26:8888";
 
-// head: 26
-// left hand: 8
-// right hand: 15
-
 $(document).ready(function () {
     frames.start();
 });
+
+// Flags to control when to transition to other screens
+var start_flag = true;
+var q0_flag = false;
+var q1_flag = false;
+var q2_flag = false;
+var q3_flag = false;
+var results_flag = false;
+var barcode_flag = false;
+var countdown;
 
 var frames = {
     socket: null,
@@ -23,7 +29,6 @@ var frames = {
             
             // If a person is seen, start monitoring their movements
             if (frame.people && frame["people"][0]) {
-                console.log("Person seen");
 
                 // Head height
                 var head = frame["people"][0]["joints"][26]["position"]["y"];
@@ -33,59 +38,63 @@ var frames = {
                 var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
                 var hand_raised = left_hand < head || right_hand < head;
 
-                // //--- for testing
-                // console.log("------");
-                // console.log("head: ", head);
-                // console.log("left_hand: ", left_hand);
-                // console.log("right_hand: ", right_hand);
-                // console.log("hand_raised: ", hand_raised);
+                if (!start_flag && barcode_flag && hand_raised) {
+                    console.log("go to barcode");
 
-                // if (frame["people"][0]["joints"][26]["position"]["x"] > 0) {
-                //     console.log("standing on left");
-                //     standing_on_left = true;
-                // } else {
-                //     console.log("standing on right");
-                // }
-                // //---
+                    go_to_barcode();
+                }
 
+                else if (!start_flag && results_flag) {
+                    console.log("results");
+
+                    show_results();
+                    // barcode_flag = true;
+                }
+
+                else if (!start_flag && q3_flag) {
+                    console.log("question 3");
+
+                    if (countdown == 0) {
+                        perform_question(frame);
+                        results_flag = true;
+                    }
+                }
+
+                else if (!start_flag && q2_flag) {
+                    console.log("question 2");
+
+                    if (countdown == 0) {
+                        perform_question(frame);
+                        q3_flag = true;
+                    }
+                }
+
+                else if (!start_flag && q1_flag) {
+                    console.log("question 1");
+
+                    if (countdown == 0) {
+                        perform_question(frame);
+                        q2_flag = true;
+                    }
+                }
+
+                else if (!start_flag && q0_flag) {
+                    console.log("question 0");
+
+                    if (countdown == 0) {
+                        perform_question(frame);
+                        q1_flag = true;
+                    }
+                }
 
                 // If on the start screen and hand is raised, go to first question
-                if (start_flag && hand_raised) {
+                else if (start_flag && hand_raised) {
                     console.log("on start screen, hand is raised");
 
                     start_flag = false;
+                    q0_flag = true;
                     go_to_next();
                 }
-
-                // If not on the start screen (in the quiz) and hand is raised,
-                // select the appropriate choice
-                if (!start_flag && hand_raised) {
-                    console.log("in the quiz, hand is raised");
-
-                    var standing_on_left = false;
-                    // Check if standing to the left
-                    if (frame["people"][0]["joints"][26]["position"]["x"] > 0) {
-                        console.log("standing on left");
-                        standing_on_left = true;
-                    } else {
-                        console.log("standing on right");
-                    }
-
-                    // Select the choice based on their position
-                    if (standing_on_left) {
-                        select_choice(true);
-                    } else {
-                        select_choice(false);
-                    }
-                }
-
-                // If on the results screen and hand is raised, go to
-                // screen with list of people w/same result
-                if (contacts_flag && hand_raised) {
-                    console.log("go to contacts");
-                    go_to_contacts();
-                }
-
             }
         }
     },
@@ -97,19 +106,49 @@ var frames = {
 
 var curr_question = 0;
 var results = [];
+var countdown;
+var countdownInterval;
 
-// Flags to control when to transition to other screens
-var start_flag = true;
-var contacts_flag = false;
-
-var canvas = document.getElementById('myCanvas');
-var ctx = canvas.getContext('2d');
+var canvas = document.getElementById("myCanvas");
+var ctx = canvas.getContext("2d");
 
 // Set canvas size to match the screen
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 start();
+
+// Function to start the countdown
+function startCountdown() {
+    countdown = 15; // Initial countdown value in seconds
+
+    // Update the countdown every second
+    countdownInterval = setInterval(function() {
+        // Clear the area for the countdown timer
+        ctx.clearRect((canvas.width / 2) - 50, 0, 150, 150);
+
+        // Display the countdown timer in the middle of the top of the canvas
+        ctx.fillStyle = "black";
+        ctx.font = "60px Arial"; // Bigger font size
+        ctx.textAlign = "center";
+        ctx.fillText(countdown, canvas.width / 2, 100); // Adjust the vertical position
+
+        // Decrement the countdown
+        countdown--;
+
+        // Check if the countdown has reached zero
+        if (countdown < 0) {
+            clearInterval(countdownInterval); // Stop the countdown when it reaches zero
+            // Add any action you want to take after the countdown ends here
+        }
+    }, 1000); // Update the countdown every second
+}
+
+// Function to reset the countdown
+function resetCountdown() {
+    clearInterval(countdownInterval); // Stop the previous countdown
+    startCountdown(); // Start a new countdown
+}
 
 // Start the game
 function start() {
@@ -120,20 +159,20 @@ function start() {
     var rectY = (canvas.height - rectHeight) / 2;
 
     // The blue rectangle
-    ctx.fillStyle = 'blue';
+    ctx.fillStyle = "blue";
     ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
 
     // Set font properties for the text
     var fontSize = 36;
-    var font = fontSize + 'px Arial';
+    var font = fontSize + "px Arial";
     ctx.font = font;
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
 
     // Display the text
-    var textLine1 = 'Raise your hand to';
-    var textLine2 = 'start your adventure!';
+    var textLine1 = "Raise your hand to";
+    var textLine2 = "start your adventure!";
     var textX = canvas.width / 2;
     var textY = canvas.height / 2;
     ctx.fillText(textLine1, textX, textY - fontSize);
@@ -143,34 +182,36 @@ function start() {
 // Go to the next question
 function go_to_next() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(canvas.width - 100, 0, 100, 50);
+    clearInterval(countdownInterval);
 
     // Set font properties for the question
     var questionFontSize = 28;
-    var questionFont = questionFontSize + 'px Arial';
+    var questionFont = questionFontSize + "px Arial";
     ctx.font = questionFont;
 
     // Set properties for the choices
-    var rectWidth = 200;
-    var rectHeight = 100;
-    var rectSpacing = 100;
-    var rectY = (canvas.height / 3) * 2;
+    var rectWidth = 300;
+    var rectHeight = 150;
+    var rectSpacing = 150;
+    var rectY = canvas.height / 2;
     var trueX = canvas.width / 2 - rectSpacing - rectWidth;
     var falseX = canvas.width / 2 + rectSpacing;
-    ctx.fillStyle = 'black';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     
     // Calculate position to center the question
-    var question = questions[curr_question].question
+    var question = questions[curr_question].question;
     var textX = canvas.width / 2;
     var textY = canvas.height / 4;
     
     // Split the question into three lines
-    var lines = question.split(' ');
+    var lines = question.split(" ");
     var len = lines.length;
-    var line1 = lines.slice(0, len/3).join(' ');
-    var line2 = lines.slice(len/3, len * 2/3).join(' ');
-    var line3 = lines.slice(len * 2/3, len).join(' ');
+    var line1 = lines.slice(0, len/3).join(" ");
+    var line2 = lines.slice(len/3, len * 2/3).join(" ");
+    var line3 = lines.slice(len * 2/3, len).join(" ");
     
     // Display the question
     ctx.fillText(line1, textX, textY);
@@ -178,38 +219,42 @@ function go_to_next() {
     ctx.fillText(line3, textX, textY + 2 * questionFontSize);
     
     // Display the first choice
-    ctx.fillStyle = 'blue';
+    ctx.fillStyle = "blue";
     ctx.fillRect(trueX, rectY, rectWidth, rectHeight);
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = "white";
+    ctx.font = "36px Arial"; // Increase font size for choices
     ctx.fillText(questions[curr_question].choices[0], trueX + rectWidth / 2, rectY + rectHeight / 2);
     
     // Display the second choice
-    ctx.fillStyle = 'blue';
+    ctx.fillStyle = "blue";
     ctx.fillRect(falseX, rectY, rectWidth, rectHeight);
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = "white";
     ctx.fillText(questions[curr_question].choices[1], falseX + rectWidth / 2, rectY + rectHeight / 2);    
 
     // Instructions to select a choice
-    var lineText = "Tip: Walk to the left or the right and raise your hand to select the option";
+    var lineText1 = "Walk to the left or right to choose!";
+    var lineText2 = "When the countdown reaches 0 it records your choice.";
     ctx.font = "28px Arial";
     ctx.fillStyle = "black";
     ctx.textAlign = "center";
-    ctx.fillText(lineText, canvas.width / 2, canvas.height - 100);
+    ctx.fillText(lineText1, canvas.width / 2, canvas.height - 130);
+    ctx.fillText(lineText2, canvas.width / 2, canvas.height - 100);
 
+    resetCountdown();
 }
 
 // Show the personality test results
 function show_results() {
-    contacts_flag = true;
-
+    clearInterval(countdownInterval);
+    barcode_flag = true;
     var result = results.join("");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Display the personality test result
-    ctx.font = "bold 50px Arial";
+    ctx.font = "bold 80px Arial";
     ctx.fillStyle = "Black";
     ctx.textAlign = "center";
-    ctx.fillText(result, canvas.width / 2, 100);
+    ctx.fillText(result, canvas.width / 2, 150);
 
     // Display the box for the strengths
     var boxWidth = 400;
@@ -221,67 +266,74 @@ function show_results() {
     ctx.font = "28px Arial";
     ctx.fillStyle = "black";
     ctx.textAlign = "left";
-    ctx.fillText("Your strengths are:", boxX + 20, boxY + 40);
-    ctx.fillText("  1)  " + result_listing[result][0], boxX + 20, boxY + 70);
-    ctx.fillText("  2)  " + result_listing[result][1], boxX + 20, boxY + 100);
-    ctx.fillText("  3)  " + result_listing[result][2], boxX + 20, boxY + 130);
+    ctx.fillText("Your strengths are:", boxX + 20, boxY + 50);
+    ctx.fillText("  1)  " + result_listing[result][0], boxX + 20, boxY + 80);
+    ctx.fillText("  2)  " + result_listing[result][1], boxX + 20, boxY + 110);
+    ctx.fillText("  3)  " + result_listing[result][2], boxX + 20, boxY + 140);
 
     // Display the rectangle with instructions about how to see contacts
-    var rectWidth = 400;
-    var rectHeight = 90;
+    var rectWidth = 500;
+    var rectHeight = 130;
     var rectX = (canvas.width - rectWidth) / 2;
     var rectY = 500;
     ctx.fillStyle = "blue";
     ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
-    ctx.font = "28px Arial";
+    ctx.font = "36px Arial";
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
-    ctx.fillText("Raise your hand to see other", canvas.width / 2, rectY + 25);
-    ctx.fillText("people with the same result", canvas.width / 2, rectY + rectHeight - 25);
+    ctx.fillText("Raise your hand to access", canvas.width / 2, rectY + 40);
+    ctx.fillText("the optional survey!", canvas.width / 2, rectY + rectHeight - 40);
 }
 
 // Show the screen with the other people who got the same result
-function go_to_contacts() {
+function go_to_barcode() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    var titleText = "Yalies with the same result";
-    ctx.font = "bold 36px Arial";
+    // Large centered title
+    var titleText = "Scan the barcode to take the survey!";
+    var titleFontSize = 36;
+    var titleFont = titleFontSize + "px Arial";
+    ctx.font = titleFont;
     ctx.fillStyle = "black";
     ctx.textAlign = "center";
-    ctx.fillText(titleText, canvas.width / 2, 100);
+    ctx.fillText(titleText, canvas.width / 2, canvas.height / 4);
 
-    // Calculate box dimensions for the list of names
-    var boxWidth = 500;
-    var boxHeight = 140;
-    var boxX = (canvas.width - boxWidth) / 2;
-    var boxY = 200;
+    // Load and draw large square image
+    var barcodeImg = new Image();
+    barcodeImg.src = "barcode.png";
+    barcodeImg.onload = function() {
+        var imgSize = canvas.height / 2;
+        var imgX = (canvas.width - imgSize) / 2;
+        var imgY = canvas.height / 2 - imgSize / 2;
+        ctx.drawImage(barcodeImg, imgX, imgY + 50, imgSize, imgSize);
+    };
+}
 
-    // Display the list of names
-    ctx.fillStyle = "#cccccc";
-    ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-    ctx.font = "28px Arial";
-    ctx.fillStyle = "black";
-    ctx.textAlign = "left";
-    var lineHeight = 40;
-    var startY = boxY + 30;
-    for (var i = 0; i < contacts.length; i++) {
-        ctx.fillText(String(contacts[i]["name"] + ", " + contacts[i]["email"]), boxX + 20, startY + i * lineHeight);
+function perform_question(frame) {
+    console.log("Perform question: ", curr_question);
+
+    // Give them 20 seconds (20000 milliseconds) to choose
+    // console.log("Start");
+    // setTimeout(function() {
+    //     console.log("Waited for 20 seconds");
+    // }, 20000);
+    // console.log("End");
+
+    // Check if standing to the left
+    var standing_on_left = false;
+    if (frame["people"][0]["joints"][26]["position"]["x"] > 0) {
+        console.log("standing on left");
+        standing_on_left = true;
+    } else {
+        console.log("standing on right");
     }
 
-    // Placeholder for the barcode
-    var squareWidth = 200;
-    var squareHeight = 200;
-    var squareX = (canvas.width - squareWidth) / 2;
-    var squareY = boxY + boxHeight + 50;
-    ctx.fillStyle = "#888888";
-    ctx.fillRect(squareX, squareY, squareWidth, squareHeight);
-
-    // Display instructions about what the barcode is for
-    var lineText = "Scan this barcode to fill out the survey!";
-    ctx.font = "28px Arial";
-    ctx.fillStyle = "black";
-    ctx.textAlign = "center";
-    ctx.fillText(lineText, canvas.width / 2, squareY + squareHeight + 50);
+    // Select the choice based on their position
+    if (standing_on_left) {
+        select_choice(true);
+    } else {
+        select_choice(false);
+    }
 }
 
 // Select either choice 1 or choice 2
@@ -296,14 +348,16 @@ function select_choice(choice_1) {
     curr_question += 1;
 
     if (curr_question > 3) {
-        show_results();
+        console.log("Question number out of range")
+        show_results()
         return
     }
+
     go_to_next()
 }
 
-// Button listeners (don't use this, control via HCI display)
-canvas.addEventListener('click', function(event) {
+// Button listeners (don"t use this, control via HCI display)
+canvas.addEventListener("click", function(event) {
     // Go from the start screen to the first question
     if (start_flag) {
         var mouseX = event.clientX;
@@ -327,10 +381,10 @@ canvas.addEventListener('click', function(event) {
         var mouseX = event.clientX;
         var mouseY = event.clientY;
     
-        var rectWidth = 200;
-        var rectHeight = 100;
-        var rectSpacing = 100;
-        var rectY = (canvas.height / 3) * 2;
+        var rectWidth = 300;
+        var rectHeight = 150;
+        var rectSpacing = 150;
+        var rectY = canvas.height / 2;
         var trueX = canvas.width / 2 - rectSpacing - rectWidth;
         var falseX = canvas.width / 2 + rectSpacing;
     
@@ -346,19 +400,19 @@ canvas.addEventListener('click', function(event) {
     }
 
     // Go from the results screen to the statistics screen
-    if (contacts_flag) {
+    if (barcode_flag) {
         var mouseX = event.clientX;
         var mouseY = event.clientY;
 
-        var rectWidth = 400;
-        var rectHeight = 90;
+        var rectWidth = 500;
+        var rectHeight = 130;
         var rectX = (canvas.width - rectWidth) / 2;
         var rectY = 500;
 
         // Check if the click is inside the start rectangle
         if (mouseX >= rectX && mouseX <= rectX + rectWidth && mouseY >= rectY && mouseY <= rectY + rectHeight) {
             // This line is what executes the transition
-            go_to_contacts();
+            go_to_barcode();
         }
     }
 });
