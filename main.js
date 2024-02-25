@@ -152,11 +152,31 @@ function resetCountdown() {
 
 // Start the game
 function start() {
+    // Set font properties for the instructions
+    var fontSize = 36;
+    var font = fontSize + "px Arial";
+    ctx.font = font;
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    // Display the text
+    var instructionsLine1 = "Learn about your MBTI personality ";
+    var instructionsLine2 = "profile and your unique strengths,";
+    var instructionsLine3 = "by making choices in the context";
+    var instructionsLine4 = "of a vacation in Italy!";
+    var instructionsTextX = canvas.width / 2;
+    var instructionsTextY = canvas.height / 4;
+    ctx.fillText(instructionsLine1, instructionsTextX, instructionsTextY - 3 * fontSize);
+    ctx.fillText(instructionsLine2, instructionsTextX, instructionsTextY - fontSize);
+    ctx.fillText(instructionsLine3, instructionsTextX, instructionsTextY + fontSize);
+    ctx.fillText(instructionsLine4, instructionsTextX, instructionsTextY + 3 * fontSize);
+
     // Set properties for the blue rectangle
     var rectWidth = 400;
-    var rectHeight = 200;
+    var rectHeight = 100;
     var rectX = (canvas.width - rectWidth) / 2;
-    var rectY = (canvas.height - rectHeight) / 2;
+    var rectY = (canvas.height - rectHeight / 2) / 2;
 
     // The blue rectangle
     ctx.fillStyle = "blue";
@@ -175,8 +195,8 @@ function start() {
     var textLine2 = "start your adventure!";
     var textX = canvas.width / 2;
     var textY = canvas.height / 2;
-    ctx.fillText(textLine1, textX, textY - fontSize);
-    ctx.fillText(textLine2, textX, textY + fontSize);
+    ctx.fillText(textLine1, textX, textY + 10);
+    ctx.fillText(textLine2, textX, textY + fontSize + 10);
 }
 
 // Go to the next question
