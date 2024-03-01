@@ -439,7 +439,7 @@ canvas.addEventListener("click", function(event) {
 
 const questions = [
     {
-        question: "You see a patisserie shop where you can buy a cannoli and curl up with a novel. Or, you go to your hotel and brush up on your Italian with the check-in person. Which do you choose?",
+        question: "You are on a vacation in Italy and you see a patisserie shop where you can buy a cannoli and curl up with a novel. Or, you go to your hotel and brush up on your Italian with the check-in person. Which do you choose?",
         choices: ["Patisserie", "Hotel"],
         results: {"Patisserie": "I", "Hotel": "E"}
     },
