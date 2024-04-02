@@ -1,5 +1,5 @@
-// var host = "cpsc484-02.yale.internal:8888";
-var host = "10.67.73.26:8888";
+var host = "cpsc484-02.stdusr.yale.internal:8888"; // Display 2
+// var host = "10.67.73.26:8888"; // Display 3
 
 $(document).ready(function () {
     frames.start();
