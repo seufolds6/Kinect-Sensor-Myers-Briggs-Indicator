@@ -1,5 +1,4 @@
-var host = "cpsc484-02.stdusr.yale.internal:8888"; // Display 2
-// var host = "10.67.73.26:8888"; // Display 3
+var host = "cpsc484-02.stdusr.yale.internal:8888";
 
 $(document).ready(function () {
     frames.start();
@@ -13,14 +12,16 @@ var q2_flag = false;
 var q3_flag = false;
 var results_flag = false;
 var barcode_flag = false;
+var finished_flag = false;
 var countdown;
+const COUNTDOWN_LENGTH = 15;
 var frame;
 
 var hand_raised = false;
 var standing_on_left = false;
 
 var offset = 0;
-const offset_wait = 20;
+const OFFSET_WAIT = 10;
 
 var frames = {
     socket: null,
@@ -39,10 +40,16 @@ var frames = {
             // If a person is seen, start monitoring their movements
             if (frame && frame.people && frame["people"][0]) {
 
-                if (!start_flag && barcode_flag && hand_raised) {
+                if (finished_flag) {
+                    console.log("finished");
+
+                    go_to_barcode();
+                }
+                else if (!start_flag && barcode_flag && hand_raised) {
                     console.log("go to barcode");
 
                     go_to_barcode();
+                    finished_flag = true;
                 }
 
                 else if (!start_flag && results_flag) {
@@ -102,10 +109,11 @@ var frames = {
 
     show: function () {
         // console.log(frame);
-        if (offset % offset_wait == 0) {
+        if (offset % OFFSET_WAIT == 0) {
             offset = 0;
             get_side();
             get_hand();
+            // debug on the screen
             drawSignalText("standing on left", standing_on_left, 50);
             drawSignalText("hands raised", hand_raised, 150);
         }
@@ -127,22 +135,9 @@ canvas.height = window.innerHeight;
 
 start();
 
-// function drawSignalShade() {
-//     ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; // Semi-transparent black shade
-
-//     // Draw shade over left half if signal is "left"
-//     if (signal === "left") {
-//         ctx.fillRect(0, 0, canvas.width / 2, canvas.height);
-//     }
-//     // Draw shade over right half if signal is "right"
-//     else if (signal === "right") {
-//         ctx.fillRect(canvas.width / 2, 0, canvas.width / 2, canvas.height);
-//     }
-// }
-
 // Function to start the countdown
 function startCountdown() {
-    countdown = 5; // Initial countdown value in seconds
+    countdown = COUNTDOWN_LENGTH; // Initial countdown value in seconds
 
     // Update the countdown every second
     countdownInterval = setInterval(function() {
@@ -371,6 +366,9 @@ function get_hand() {
         // RH height
         var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
         hand_raised = left_hand < head || right_hand < head;
+        if (hand_raised) {
+            console.log("hand raised")
+        }
     }
 }
 
@@ -405,7 +403,7 @@ function select_choice(choice_1) {
 
     if (curr_question > 3) {
         console.log("Question number out of range")
-        show_results()
+        // show_results()
         return
     }
 
