@@ -14,6 +14,14 @@ var results_flag = false;
 var barcode_flag = false;
 var finished_flag = false;
 var countdown;
+const COUNTDOWN_LENGTH = 15;
+var frame;
+
+var hand_raised = false;
+var standing_on_left = false;
+
+var offset = 0;
+const OFFSET_WAIT = 10;
 
 var frames = {
     socket: null,
@@ -21,22 +29,16 @@ var frames = {
     start: function () {
         var url = "ws://" + host + "/frames";
         frames.socket = new WebSocket(url);
+        // this will get triggered often
+        // effectively a while(1) loop
         frames.socket.onmessage = function (event) {
 
             frames.show(JSON.parse(event.data));
 
-            let frame = JSON.parse(event.data);
+            frame = JSON.parse(event.data);
             
             // If a person is seen, start monitoring their movements
-            if (frame.people && frame["people"][0]) {
-
-                // Head height
-                var head = frame["people"][0]["joints"][26]["position"]["y"];
-                // LH height
-                var left_hand = frame["people"][0]["joints"][8]["position"]["y"];
-                // RH height
-                var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
-                var hand_raised = left_hand < head || right_hand < head;
+            if (frame && frame.people && frame["people"][0]) {
 
                 if (finished_flag) {
                     console.log("finished");
@@ -62,7 +64,7 @@ var frames = {
                     console.log("question 3");
 
                     if (countdown == 0) {
-                        perform_question(frame);
+                        perform_question();
                         results_flag = true;
                     }
                 }
@@ -71,7 +73,7 @@ var frames = {
                     console.log("question 2");
 
                     if (countdown == 0) {
-                        perform_question(frame);
+                        perform_question();
                         q3_flag = true;
                     }
                 }
@@ -80,7 +82,7 @@ var frames = {
                     console.log("question 1");
 
                     if (countdown == 0) {
-                        perform_question(frame);
+                        perform_question();
                         q2_flag = true;
                     }
                 }
@@ -89,7 +91,7 @@ var frames = {
                     console.log("question 0");
 
                     if (countdown == 0) {
-                        perform_question(frame);
+                        perform_question();
                         q1_flag = true;
                     }
                 }
@@ -106,8 +108,17 @@ var frames = {
         }
     },
 
-    show: function (frame) {
-        console.log(frame);
+    show: function () {
+        // console.log(frame);
+        if (offset % OFFSET_WAIT == 0) {
+            offset = 0;
+            get_side();
+            get_hand();
+            // debug on the screen
+            drawSignalText("standing on left", standing_on_left, 50);
+            drawSignalText("hands raised", hand_raised, 150);
+        }
+        offset += 1;
     }
 };
 
@@ -127,7 +138,7 @@ start();
 
 // Function to start the countdown
 function startCountdown() {
-    countdown = 15; // Initial countdown value in seconds
+    countdown = COUNTDOWN_LENGTH; // Initial countdown value in seconds
 
     // Update the countdown every second
     countdownInterval = setInterval(function() {
@@ -336,7 +347,33 @@ function go_to_barcode() {
     };
 }
 
-function perform_question(frame) {
+function get_side() {
+    if (frame && frame.people && frame["people"][0]) {
+        if (frame["people"][0]["joints"][26]["position"]["x"] > 0) {
+            console.log("standing on left");
+            standing_on_left = true;
+        } else {
+            console.log("standing on right");
+            standing_on_left = false;
+        }
+    }
+}
+function get_hand() {
+    if (frame && frame.people && frame["people"][0]) {
+        // Head height
+        var head = frame["people"][0]["joints"][26]["position"]["y"];
+        // LH height
+        var left_hand = frame["people"][0]["joints"][8]["position"]["y"];
+        // RH height
+        var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
+        hand_raised = left_hand < head || right_hand < head;
+        if (hand_raised) {
+            console.log("hand raised")
+        }
+    }
+}
+
+function perform_question() {
     console.log("Perform question: ", curr_question);
 
     // Give them 20 seconds (20000 milliseconds) to choose
@@ -345,15 +382,6 @@ function perform_question(frame) {
     //     console.log("Waited for 20 seconds");
     // }, 20000);
     // console.log("End");
-
-    // Check if standing to the left
-    var standing_on_left = false;
-    if (frame["people"][0]["joints"][26]["position"]["x"] > 0) {
-        console.log("standing on left");
-        standing_on_left = true;
-    } else {
-        console.log("standing on right");
-    }
 
     // Select the choice based on their position
     if (standing_on_left) {
@@ -532,3 +560,14 @@ const contacts = [
         email: "jack.downs@yale.edu"
     },
 ]
+
+// Function to continuously draw the signal text on the canvas
+function drawSignalText(signal_name, signal, y_pos) {
+    var x_pos = 100;
+    ctx.clearRect(x_pos - 100, y_pos - 50, 250, 150);
+    ctx.fillStyle = "black";
+    ctx.font = "20px Arial";
+    ctx.fillText(signal_name + ": " + signal, x_pos, y_pos); // Write the value of the signal variable
+    // ctx.fillText("O", 100, 100);
+}
+
