@@ -45,6 +45,7 @@ var frames = {
 
                     go_to_barcode();
                 }
+
                 else if (!start_flag && barcode_flag && hand_raised) {
                     console.log("go to barcode");
 
