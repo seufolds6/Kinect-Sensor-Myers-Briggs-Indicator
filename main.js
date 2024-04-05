@@ -42,22 +42,17 @@ var frames = {
 
                 if (finished_flag) {
                     console.log("finished");
-
-                    go_to_barcode();
                 }
 
                 else if (!start_flag && barcode_flag && hand_raised) {
                     console.log("go to barcode");
-
                     go_to_barcode();
-                    finished_flag = true;
                 }
 
                 else if (!start_flag && results_flag) {
                     console.log("results");
 
                     show_results();
-                    // barcode_flag = true;
                 }
 
                 else if (!start_flag && q3_flag) {
@@ -325,7 +320,11 @@ function show_results() {
 
 // Show the screen with the other people who got the same result
 function go_to_barcode() {
+    if (finished_flag) {
+        return;
+    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    finished_flag = true;
 
     // Large centered title
     var titleText = "Scan the barcode to take the survey!";
