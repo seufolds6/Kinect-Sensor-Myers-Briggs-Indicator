@@ -1,5 +1,4 @@
-// var host = "cpsc484-02.yale.internal:8888";
-var host = "10.67.73.26:8888";
+var host = "cpsc484-02.stdusr.yale.internal:8888";
 
 $(document).ready(function () {
     frames.start();
@@ -13,6 +12,7 @@ var q2_flag = false;
 var q3_flag = false;
 var results_flag = false;
 var barcode_flag = false;
+var finished_flag = false;
 var countdown;
 
 var frames = {
@@ -38,10 +38,17 @@ var frames = {
                 var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
                 var hand_raised = left_hand < head || right_hand < head;
 
-                if (!start_flag && barcode_flag && hand_raised) {
+                if (finished_flag) {
+                    console.log("finished");
+
+                    go_to_barcode();
+                }
+
+                else if (!start_flag && barcode_flag && hand_raised) {
                     console.log("go to barcode");
 
                     go_to_barcode();
+                    finished_flag = true;
                 }
 
                 else if (!start_flag && results_flag) {
@@ -369,7 +376,7 @@ function select_choice(choice_1) {
 
     if (curr_question > 3) {
         console.log("Question number out of range")
-        show_results()
+        // show_results()
         return
     }
 
