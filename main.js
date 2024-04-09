@@ -110,8 +110,8 @@ var frames = {
             get_side();
             get_hand();
             // debug on the screen
-            drawSignalText("standing on left", standing_on_left, 50);
-            drawSignalText("hands raised", hand_raised, 150);
+            // drawSignalText("standing on left", standing_on_left, 50);
+            // drawSignalText("hands raised", hand_raised, 150);
         }
         offset += 1;
     }
