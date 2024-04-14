@@ -39,6 +39,7 @@ var frames = {
             
             // If a person is seen, start monitoring their movements
             if (frame && frame.people && frame["people"][0]) {
+                people_seen();
 
                 if (finished_flag) {
                     console.log("finished");
@@ -100,6 +101,9 @@ var frames = {
                     go_to_next();
                 }
             }
+            else {
+                no_people_seen();
+            }
         }
     },
 
@@ -133,39 +137,56 @@ start();
 
 // Function to start the countdown
 function startCountdown() {
-    countdown = COUNTDOWN_LENGTH; // Initial countdown value in seconds
+    countdown = COUNTDOWN_LENGTH;
 
-    // Update the countdown every second
+    // Update the countdown
     countdownInterval = setInterval(function() {
-        // Clear the area for the countdown timer
-        ctx.clearRect((canvas.width / 2) - 50, 0, 150, 150);
+        ctx.clearRect((canvas.width / 2) - 50, 50, 150, 150);
 
-        // Display the countdown timer in the middle of the top of the canvas
+        // Display the countdown timer
         ctx.fillStyle = "black";
-        ctx.font = "60px Arial"; // Bigger font size
+        ctx.font = "60px Arial";
         ctx.textAlign = "center";
-        ctx.fillText(countdown, canvas.width / 2, 100); // Adjust the vertical position
+        ctx.fillText(countdown, canvas.width / 2, 100);
 
-        // Decrement the countdown
         countdown--;
 
         // Check if the countdown has reached zero
         if (countdown < 0) {
-            clearInterval(countdownInterval); // Stop the countdown when it reaches zero
-            // Add any action you want to take after the countdown ends here
+            clearInterval(countdownInterval);
         }
-    }, 1000); // Update the countdown every second
+    }, 1000);
 }
 
 // Function to reset the countdown
 function resetCountdown() {
-    clearInterval(countdownInterval); // Stop the previous countdown
-    startCountdown(); // Start a new countdown
+    clearInterval(countdownInterval);
+    startCountdown();
+}
+
+// Erase no people seen message if it is there
+function people_seen() {
+    ctx.clearRect(canvas.width / 4, 0, 1000, 100);
+}
+
+// Display a message saying that no people were detected
+// by the Kinect sensor
+function no_people_seen() {
+    // Text style
+    ctx.font = '24px Arial';
+    ctx.fillStyle = 'red';
+    ctx.textAlign = 'center';
+
+    var text = 'You aren\'t detected by the sensor, please come closer';
+    var textX = canvas.width / 2;
+    var textY = 40;
+
+    // Draw text
+    ctx.fillText(text, textX, textY);
 }
 
 // Start the game
 function start() {
-    // Set font properties for the instructions
     var fontSize = 36;
     var font = fontSize + "px Arial";
     ctx.font = font;
@@ -191,7 +212,6 @@ function start() {
     var rectX = (canvas.width - rectWidth) / 2;
     var rectY = (canvas.height - rectHeight / 2) / 2;
 
-    // The blue rectangle
     ctx.fillStyle = "blue";
     ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
 
@@ -255,7 +275,7 @@ function go_to_next() {
     ctx.fillStyle = "blue";
     ctx.fillRect(trueX, rectY, rectWidth, rectHeight);
     ctx.fillStyle = "white";
-    ctx.font = "36px Arial"; // Increase font size for choices
+    ctx.font = "36px Arial";
     ctx.fillText(questions[curr_question].choices[0], trueX + rectWidth / 2, rectY + rectHeight / 2);
     
     // Display the second choice
@@ -304,7 +324,6 @@ function show_results() {
     ctx.fillText("  2)  " + result_listing[result][1], boxX + 20, boxY + 110);
     ctx.fillText("  3)  " + result_listing[result][2], boxX + 20, boxY + 140);
 
-    // Display the rectangle with instructions about how to see contacts
     var rectWidth = 500;
     var rectHeight = 130;
     var rectX = (canvas.width - rectWidth) / 2;
@@ -318,7 +337,7 @@ function show_results() {
     ctx.fillText("the optional survey!", canvas.width / 2, rectY + rectHeight - 40);
 }
 
-// Show the screen with the other people who got the same result
+// Show the screen with the barcode
 function go_to_barcode() {
     if (finished_flag) {
         return;
@@ -326,7 +345,6 @@ function go_to_barcode() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     finished_flag = true;
 
-    // Large centered title
     var titleText = "Scan the barcode to take the survey!";
     var titleFontSize = 36;
     var titleFont = titleFontSize + "px Arial";
@@ -335,7 +353,7 @@ function go_to_barcode() {
     ctx.textAlign = "center";
     ctx.fillText(titleText, canvas.width / 2, canvas.height / 4);
 
-    // Load and draw large square image
+    // Barcode image
     var barcodeImg = new Image();
     barcodeImg.src = "barcode.png";
     barcodeImg.onload = function() {
@@ -357,6 +375,7 @@ function get_side() {
         }
     }
 }
+
 function get_hand() {
     if (frame && frame.people && frame["people"][0]) {
         // Head height
@@ -375,14 +394,6 @@ function get_hand() {
 function perform_question() {
     console.log("Perform question: ", curr_question);
 
-    // Give them 20 seconds (20000 milliseconds) to choose
-    // console.log("Start");
-    // setTimeout(function() {
-    //     console.log("Waited for 20 seconds");
-    // }, 20000);
-    // console.log("End");
-
-    // Select the choice based on their position
     if (standing_on_left) {
         select_choice(true);
     } else {
@@ -403,7 +414,6 @@ function select_choice(choice_1) {
 
     if (curr_question > 3) {
         console.log("Question number out of range")
-        // show_results()
         return
     }
 
@@ -453,7 +463,7 @@ canvas.addEventListener("click", function(event) {
         }
     }
 
-    // Go from the results screen to the statistics screen
+    // Go from the results screen to the barcode screen
     if (barcode_flag) {
         var mouseX = event.clientX;
         var mouseY = event.clientY;
@@ -545,28 +555,11 @@ const result_listing = {
                 "spontaneous and flexible"],
 };
 
-const contacts = [
-    {
-        name: "Jane Doe",
-        email: "jane.doe@yale.edu"
-    },
-    {
-        name: "Alicia Jones",
-        email: "alicia.jones@yale.edu"
-    },
-    {
-        name: "Jack Downs",
-        email: "jack.downs@yale.edu"
-    },
-]
-
 // Function to continuously draw the signal text on the canvas
 function drawSignalText(signal_name, signal, y_pos) {
     var x_pos = 100;
     ctx.clearRect(x_pos - 100, y_pos - 50, 250, 150);
     ctx.fillStyle = "black";
     ctx.font = "20px Arial";
-    ctx.fillText(signal_name + ": " + signal, x_pos, y_pos); // Write the value of the signal variable
-    // ctx.fillText("O", 100, 100);
+    ctx.fillText(signal_name + ": " + signal, x_pos, y_pos);
 }
-
