@@ -166,7 +166,7 @@ function resetCountdown() {
 
 // Erase no people seen message if it is there
 function people_seen() {
-    ctx.clearRect(canvas.width / 4, 0, 1000, 100);
+    ctx.clearRect(canvas.width / 4, 0, 1000, 60);
 }
 
 // Display a message saying that no people were detected
