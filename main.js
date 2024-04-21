@@ -140,9 +140,25 @@ function startCountdown() {
         if (countdown < 0) {
             clearInterval(countdownInterval); // Stop the countdown when it reaches zero
             // Add any action you want to take after the countdown ends here
+        } else if (countdown === 5) {
+            // If the countdown reaches 5 seconds, display a prompt message
+            displaySubmitPrompt();
         }
     }, 1000); // Update the countdown every second
 }
+
+// Function to display a prompt message reminding to submit an answer
+function displaySubmitPrompt() {
+    // Clear previous prompt if any
+    ctx.clearRect(0, canvas.height - 50, canvas.width, 50);
+
+    // Display the prompt message
+    ctx.fillStyle = "red";
+    ctx.font = "24px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Please select an answer!", canvas.width / 2, canvas.height - 60);
+}
+
 
 // Function to reset the countdown
 function resetCountdown() {
@@ -203,10 +219,16 @@ function start() {
 }
 
 // Go to the next question
-function go_to_next(previous_answer = " ") {
+function go_to_next(previous_answer = "") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.clearRect(canvas.width - 100, 0, 100, 50);
     clearInterval(countdownInterval);
+
+    // If previous_answer is empty, go to the previous question
+    if (previous_answer === "") {
+        curr_question -= 1;
+        if (curr_question < 0) curr_question = 0; // Ensure not to go below the first question
+    }
 
     // Set font properties for the question
     var questionFontSize = 28;
@@ -223,24 +245,24 @@ function go_to_next(previous_answer = " ") {
     ctx.fillStyle = "black";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    
+
     // Calculate position to center the question
     var question = questions[curr_question].question;
     var textX = canvas.width / 2;
-    var textY = canvas.height*3 / 8;
-    
+    var textY = canvas.height * 3 / 8;
+
     // Split the question into three lines
     var lines = question.split(" ");
     var len = lines.length;
-    var line1 = lines.slice(0, len/3).join(" ");
-    var line2 = lines.slice(len/3, len * 2/3).join(" ");
-    var line3 = lines.slice(len * 2/3, len).join(" ");
-    
+    var line1 = lines.slice(0, len / 3).join(" ");
+    var line2 = lines.slice(len / 3, len * 2 / 3).join(" ");
+    var line3 = lines.slice(len * 2 / 3, len).join(" ");
+
     // Display the question
     ctx.fillText(line1, textX, textY);
     ctx.fillText(line2, textX, textY + questionFontSize);
     ctx.fillText(line3, textX, textY + 2 * questionFontSize);
-    
+
     // Display the first choice
     ctx.beginPath();
     ctx.fillStyle = "blue";
@@ -250,7 +272,7 @@ function go_to_next(previous_answer = " ") {
     ctx.fillStyle = "white";
     ctx.font = "36px Arial"; // Increase font size for choices
     ctx.fillText(questions[curr_question].choices[0], trueX + rectWidth / 2, rectY + rectHeight / 2);
-    
+
     // Display the second choice
     ctx.beginPath();
     ctx.fillStyle = "blue";
@@ -258,7 +280,7 @@ function go_to_next(previous_answer = " ") {
     ctx.fill();
     ctx.closePath();
     ctx.fillStyle = "white";
-    ctx.fillText(questions[curr_question].choices[1], falseX + rectWidth / 2, rectY + rectHeight / 2);    
+    ctx.fillText(questions[curr_question].choices[1], falseX + rectWidth / 2, rectY + rectHeight / 2);
 
     // Instructions to select a choice
     var lineText1 = "Walk to the left or right to choose!";
@@ -269,14 +291,22 @@ function go_to_next(previous_answer = " ") {
     ctx.fillText(lineText1, canvas.width / 2, canvas.height - 130);
     ctx.fillText(lineText2, canvas.width / 2, canvas.height - 100);
 
-    if(previous_answer != " ") {
+    // If previous_answer is not empty, display the selected answer
+    if (previous_answer !== "") {
         var text = "You selected: ".concat(previous_answer);
-        ctx.fillText(text, canvas.width/2, (textY + 160)/2 - 14);//average between question location and bottom of timer, then subtract half of the font size to center vertically //textY - 3*questionFontSize);
-
+        ctx.fillText(text, canvas.width / 2, (textY + 160) / 2 - 14);
+        // Update the instructions to include the option to go back
+        lineText2 += " Raise your hand in the middle to go to the previous question";
     }
+
+    // Clear the area for the updated instruction
+    ctx.clearRect(0, canvas.height - 115, canvas.width, 50);
+    // Display the updated instruction
+    ctx.fillText(lineText2, canvas.width / 2, canvas.height - 100);
 
     resetCountdown();
 }
+
 
 // Show the personality test results
 function show_results() {
@@ -351,30 +381,32 @@ function perform_question(frame) {
     console.log("Perform question: ", curr_question);
 
     // Give them 20 seconds (20000 milliseconds) to choose
-    // console.log("Start");
-    // setTimeout(function() {
-    //     console.log("Waited for 20 seconds");
-    // }, 20000);
-    // console.log("End");
+    startCountdown(); // Start the countdown
 
-    // Check if standing to the left
-    var standing_on_left = false;
-    if (frame["people"][0]["joints"][26]["position"]["x"] > 0) {
-        console.log("standing on left");
-        standing_on_left = true;
-    } else {
-        console.log("standing on right");
-    }
+    // Check if standing to the left or right or hands raised in the middle
+    var standing_on_left = frame["people"][0]["joints"][26]["position"]["x"] > 0;
+    var head = frame["people"][0]["joints"][26]["position"]["y"];
+    var left_hand = frame["people"][0]["joints"][8]["position"]["y"];
+    var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
+    var hand_raised = left_hand < head || right_hand < head;
 
-    // Select the choice based on their position
-    if (standing_on_left) {
-        select_choice(true);
+    // If hands raised in the middle, go to the previous question
+    if (hand_raised) {
+        // Adjust current question index
+        curr_question -= 1;
+        if (curr_question < 0) curr_question = 0; // Ensure not to go below the first question
+        // Clear canvas and go to the previous question
+        go_to_next();
     } else {
-        select_choice(false);
+        // Otherwise, proceed with selecting the choice based on their position
+        if (standing_on_left) {
+            select_choice(true);
+        } else {
+            select_choice(false);
+        }
     }
 }
 
-// Select either choice 1 or choice 2
 function select_choice(choice_1) {
     if (choice_1) {
         var selected = questions[curr_question].choices[0];
@@ -414,26 +446,31 @@ canvas.addEventListener("click", function(event) {
         }
     }
 
-    // Go to the next question
+    // Go to the next question or back to the previous question
     if (!start_flag) {
         var mouseX = event.clientX;
         var mouseY = event.clientY;
-    
+
         var rectWidth = 300;
         var rectHeight = 150;
         var rectSpacing = 150;
         var rectY = canvas.height / 2;
         var trueX = canvas.width / 2 - rectSpacing - rectWidth;
         var falseX = canvas.width / 2 + rectSpacing;
-    
+
         // Check if the click is within the bounds of the first choice
         if (mouseX >= trueX && mouseX <= trueX + rectWidth && mouseY >= rectY && mouseY <= rectY + rectHeight) {
             select_choice(true);
         }
-    
+
         // Check if the click is within the bounds of the second choice
         if (mouseX >= falseX && mouseX <= falseX + rectWidth && mouseY >= rectY && mouseY <= rectY + rectHeight) {
             select_choice(false);
+        }
+
+        // Check if the click is between the rectangles (to go back to the previous question)
+        if (mouseX >= trueX + rectWidth && mouseX <= falseX && mouseY >= rectY && mouseY <= rectY + rectHeight) {
+            go_to_next(""); // Passing an empty string to go back to the previous question
         }
     }
 
@@ -454,6 +491,7 @@ canvas.addEventListener("click", function(event) {
         }
     }
 });
+
 
 const questions = [
     {
