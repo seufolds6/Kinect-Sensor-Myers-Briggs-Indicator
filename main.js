@@ -1,5 +1,4 @@
-// var host = "cpsc484-02.yale.internal:8888";
-var host = "10.67.73.26:8888";
+var host = "cpsc484-02.stdusr.yale.internal:8888";
 
 $(document).ready(function () {
     frames.start();
@@ -143,7 +142,7 @@ function startCountdown() {
     // Update the countdown
     countdownInterval = setInterval(function() {
         // Display the countdown timer
-        ctx.clearRect((canvas.width / 2) - 50, 50, 150, 150);
+        ctx.clearRect((canvas.width / 2) - 50, 0, 150, 150);
         ctx.fillStyle = "black";
         ctx.font = "60px Arial";
         ctx.textAlign = "center";
