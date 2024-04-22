@@ -13,6 +13,7 @@ var q3_flag = false;
 var results_flag = false;
 var barcode_flag = false;
 var finished_flag = false;
+var barcode_flag = false;
 
 var countdown;
 var curr_question = 0;
@@ -47,15 +48,33 @@ var frames = {
             hand_raised_and_done_delay = hand_raised && countdown < DELAY_BEFORE_HAND_RAISE;
             
             // If a person is seen, start monitoring their movements
+            /*
+            State logic is formatted as:
+                if state n
+                -- if hand up, go next and change state. else, do nothing.
+                else if state n - 1
+                -- if hand up, go next and change state. else, do nothing.
+                ...
+                else if state 0
+                -- if hand up, change state and start the game
+            */
             if (frame && frame.people && frame["people"][0]) {
                 people_seen();
 
+                if (barcode_flag) {
+                    // console.log("restarting");
 
-                if (results_flag) {
+                    if (hand_raised_and_done_delay) {
+                        // restart the game
+                        location.reload();
+                    }
+                }
+                else if (results_flag) {
                     // console.log("go to barcode");
 
                     if (hand_raised_and_done_delay) {
                         go_to_barcode();
+                        barcode_flag = true;
                         resetCountdown();
                     }
                 }
@@ -348,7 +367,6 @@ function go_to_next(previous_answer = "") {
 
 // Show the personality test results
 function show_results() {
-    barcode_flag = true;
     var result = results.join("");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
