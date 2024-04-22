@@ -141,7 +141,8 @@ var frames = {
             offset = 0;
             get_side();
             get_hand();
-            // debug on the screen
+
+            // Debug: display left/right, hand states
             // drawSignalText("standing on left", standing_on_left, 50);
             // drawSignalText("hands raised", hand_raised, 150);
         }
@@ -165,12 +166,9 @@ function startCountdown() {
 
     // Update the countdown
     countdownInterval = setInterval(function() {
-        // Display the countdown timer
-        ctx.clearRect((canvas.width / 2) - 50, 0, 150, 150);
-        ctx.fillStyle = "black";
-        ctx.font = "60px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText(countdown, canvas.width / 2, 100);
+
+        // debug: Display the countdown timer
+        // displayCountdown();
 
         if (countdown > 0) {
             countdown--;
@@ -635,7 +633,17 @@ const result_listing = {
                 "spontaneous and flexible"],
 };
 
-// Function to continuously draw the signal text on the canvas
+
+// DEBUGGER FUNCTIONS
+
+function displayCountdown() {
+    ctx.clearRect((canvas.width / 2) - 50, 0, 150, 150);
+    ctx.fillStyle = "black";
+    ctx.font = "60px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(countdown, canvas.width / 2, 100);
+}
+
 function drawSignalText(signal_name, signal, y_pos) {
     var x_pos = 100;
     ctx.clearRect(x_pos - 100, y_pos - 50, 250, 150);
