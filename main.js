@@ -23,7 +23,7 @@ var previous_answer = "";
 var results = [];
 var countdownInterval;
 
-const COUNTDOWN_INITIAL = 15;
+const COUNTDOWN_INITIAL = 10;
 const COUNTDOWN_TIME_HANDRAISE = COUNTDOWN_INITIAL - 2;
 const COUNTDOWN_TIME_PROMPT = 5;
 
@@ -182,11 +182,6 @@ function startCountdown() {
         if (countdown > 0) {
             countdown--;
         }
-
-        if (countdown === COUNTDOWN_TIME_PROMPT) {
-            // If the countdown reaches 5 seconds, display a prompt message
-            displaySubmitPrompt();
-        }
     }, 1000);
 }
 
@@ -199,7 +194,7 @@ function displaySubmitPrompt() {
     ctx.fillStyle = "red";
     ctx.font = "24px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("Please select an answer!", canvas.width / 2, canvas.height - 60);
+    ctx.fillText("Move left or right, then raise your hand to confirm answer!", canvas.width / 2, canvas.height - 60);
 }
 
 
@@ -286,6 +281,11 @@ function start() {
 function drawQuestionBoxes() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    if (countdown < COUNTDOWN_TIME_PROMPT) {
+        // If the countdown reaches 5 seconds, display a prompt message
+        displaySubmitPrompt();
+    }
+
     // Set font properties for the question
     var questionFontSize = 28;
     var questionFont = questionFontSize + "px Arial";
@@ -355,27 +355,12 @@ function drawQuestionBoxes() {
         ctx.closePath();
     }
     
-    // Instructions to select a choice
-    var lineText1 = "Walk to the left or right to choose!";
-    var lineText2 = "When the countdown reaches 0 it records your choice.";
-    ctx.font = "28px Arial";
-    ctx.fillStyle = "black";
-    ctx.textAlign = "center";
-    ctx.fillText(lineText1, canvas.width / 2, canvas.height - 130);
-    ctx.fillText(lineText2, canvas.width / 2, canvas.height - 100);
-
     // If previous_answer is not empty, display the selected answer
     if (previous_answer !== "") {
         var text = "You selected: ".concat(previous_answer);
+        ctx.fillStyle = "black";
         ctx.fillText(text, canvas.width / 2, (textY + 160) / 2 - 14);
-        // Update the instructions to include the option to go back
-        lineText2 += " Raise your hand in the middle to go to the previous question";
     }
-
-    // Clear the area for the updated instruction
-    ctx.clearRect(0, canvas.height - 115, canvas.width, 50);
-    // Display the updated instruction
-    ctx.fillText(lineText2, canvas.width / 2, canvas.height - 100);
 }
 
 // Go to the next question
