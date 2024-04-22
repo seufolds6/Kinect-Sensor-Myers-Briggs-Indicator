@@ -22,6 +22,7 @@ var countdownInterval;
 
 const COUNTDOWN_LENGTH = 15;
 const DELAY_BEFORE_HAND_RAISE = COUNTDOWN_LENGTH - 3;
+const WAIT_UNTIL_PROMPT = 5;
 
 var frame;
 
@@ -174,7 +175,7 @@ function startCountdown() {
             countdown--;
         }
 
-        if (countdown === 5) {
+        if (countdown === WAIT_UNTIL_PROMPT) {
             // If the countdown reaches 5 seconds, display a prompt message
             displaySubmitPrompt();
         }
@@ -274,10 +275,12 @@ function start() {
     ctx.fillText(textLine2, textX, textY + fontSize + 10);
 }
 
+// function drawQuestionBoxes(shade = None) {
+
+// }
+
 // Go to the next question
 function go_to_next(previous_answer = "") {
-    console.log("called go_to_next, previous_answer:");
-    console.log(previous_answer);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.clearRect(canvas.width - 100, 0, 100, 50);
 
@@ -485,9 +488,8 @@ function select_choice(choice_1) {
     curr_question += 1;
 
     if (curr_question > 3) {
-        console.log("Question number out of range")
-        show_results()
-        return
+        show_results();
+        return;
     }
 
     go_to_next(selected)
