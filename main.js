@@ -17,17 +17,21 @@ var barcode_flag = false;
 
 var countdown;
 var curr_question = 0;
+
+var previous_answer = "";
+
 var results = [];
 var countdownInterval;
 
-const COUNTDOWN_LENGTH = 15;
-const DELAY_BEFORE_HAND_RAISE = COUNTDOWN_LENGTH - 3;
-const WAIT_UNTIL_PROMPT = 5;
+const COUNTDOWN_INITIAL = 15;
+const COUNTDOWN_TIME_HANDRAISE = COUNTDOWN_INITIAL - 2;
+const COUNTDOWN_TIME_PROMPT = 5;
 
 var frame;
 
 var hand_raised = false;
 var standing_on_left = false;
+var highlightX;
 
 var offset = 0;
 const OFFSET_WAIT = 10;
@@ -46,7 +50,7 @@ var frames = {
 
             frame = JSON.parse(event.data);
 
-            hand_raised_and_done_delay = hand_raised && countdown < DELAY_BEFORE_HAND_RAISE;
+            hand_raised_and_done_delay = hand_raised && countdown < COUNTDOWN_TIME_HANDRAISE;
             
             // If a person is seen, start monitoring their movements
             /*
@@ -143,6 +147,10 @@ var frames = {
             get_side();
             get_hand();
 
+            if (!results_flag && (q0_flag || q1_flag || q2_flag || q3_flag)) {
+                drawQuestionBoxes(previous_answer);
+            }
+
             // Debug: display left/right, hand states
             // drawSignalText("standing on left", standing_on_left, 50);
             // drawSignalText("hands raised", hand_raised, 150);
@@ -163,7 +171,7 @@ start();
 // Function to start the countdown
 function startCountdown() {
     // console.log("started countdown");
-    countdown = COUNTDOWN_LENGTH;
+    countdown = COUNTDOWN_INITIAL;
 
     // Update the countdown
     countdownInterval = setInterval(function() {
@@ -175,7 +183,7 @@ function startCountdown() {
             countdown--;
         }
 
-        if (countdown === WAIT_UNTIL_PROMPT) {
+        if (countdown === COUNTDOWN_TIME_PROMPT) {
             // If the countdown reaches 5 seconds, display a prompt message
             displaySubmitPrompt();
         }
@@ -275,20 +283,8 @@ function start() {
     ctx.fillText(textLine2, textX, textY + fontSize + 10);
 }
 
-// function drawQuestionBoxes(shade = None) {
-
-// }
-
-// Go to the next question
-function go_to_next(previous_answer = "") {
+function drawQuestionBoxes() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.clearRect(canvas.width - 100, 0, 100, 50);
-
-    // If previous_answer is empty, go to the previous question
-    if (previous_answer === "") {
-        curr_question -= 1;
-        if (curr_question < 0) curr_question = 0; // Ensure not to go below the first question
-    }
 
     // Set font properties for the question
     var questionFontSize = 28;
@@ -342,6 +338,23 @@ function go_to_next(previous_answer = "") {
     ctx.fillStyle = "white";
     ctx.fillText(questions[curr_question].choices[1], falseX + rectWidth / 2, rectY + rectHeight / 2);
 
+    // Highlight current selection
+    if (countdown < COUNTDOWN_TIME_HANDRAISE) {
+        ctx.beginPath();
+        if (standing_on_left) {
+            highlightX = trueX;
+        }
+        else {
+            highlightX = falseX;
+        }
+        console.log(highlightX);
+        ctx.lineWidth = 5; // Set the line width for the border
+        ctx.strokeStyle = "red"; // Set the stroke color to a brighter blue
+        ctx.roundRect(highlightX, rectY, rectWidth, rectHeight, 10); // Redraw the rounded rectangle for the border
+        ctx.stroke();
+        ctx.closePath();
+    }
+    
     // Instructions to select a choice
     var lineText1 = "Walk to the left or right to choose!";
     var lineText2 = "When the countdown reaches 0 it records your choice.";
@@ -363,6 +376,15 @@ function go_to_next(previous_answer = "") {
     ctx.clearRect(0, canvas.height - 115, canvas.width, 50);
     // Display the updated instruction
     ctx.fillText(lineText2, canvas.width / 2, canvas.height - 100);
+}
+
+// Go to the next question
+function go_to_next() {
+    // If previous_answer is empty, go to the previous question
+    if (previous_answer === "") {
+        curr_question -= 1;
+        if (curr_question < 0) curr_question = 0; // Ensure not to go below the first question
+    }
 }
 
 
@@ -466,8 +488,6 @@ function get_hand() {
 function perform_question() {
     console.log("Perform question: ", curr_question);
 
-    // Give them 20 seconds (20000 milliseconds) to choose
-
     // Select the choice based on their position
     if (standing_on_left) {
         select_choice(true);
@@ -479,11 +499,11 @@ function perform_question() {
 // Select either choice 1 or choice 2
 function select_choice(choice_1) {
     if (choice_1) {
-        var selected = questions[curr_question].choices[0];
+        previous_answer = questions[curr_question].choices[0];
     } else {
-        var selected = questions[curr_question].choices[1];
+        previous_answer = questions[curr_question].choices[1];
     }
-    var letter = questions[curr_question].results[selected];
+    var letter = questions[curr_question].results[previous_answer];
     results.push(letter);
     curr_question += 1;
 
@@ -492,7 +512,7 @@ function select_choice(choice_1) {
         return;
     }
 
-    go_to_next(selected)
+    go_to_next();
 }
 
 // Button listeners (don"t use this, control via HCI display)
@@ -539,7 +559,8 @@ canvas.addEventListener("click", function(event) {
 
         // Check if the click is between the rectangles (to go back to the previous question)
         if (mouseX >= trueX + rectWidth && mouseX <= falseX && mouseY >= rectY && mouseY <= rectY + rectHeight) {
-            go_to_next(""); // Passing an empty string to go back to the previous question
+            previous_answer = "";
+            go_to_next();
         }
     }
 
