@@ -436,6 +436,10 @@ function go_to_barcode() {
         var imgY = canvas.height / 2 - imgSize / 2;
         ctx.drawImage(barcodeImg, imgX, imgY + 50, imgSize, imgSize);
     };
+    
+    // Display instruction to restart game
+    ctx.fillStyle = "black";
+    ctx.fillText("Raise hand to restart the game", canvas.width / 2, canvas.height - 60);
 }
 
 function get_side() {
