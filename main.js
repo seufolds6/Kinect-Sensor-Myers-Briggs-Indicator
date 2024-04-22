@@ -188,6 +188,8 @@ function people_seen() {
 // Display a message saying that no people were detected
 // by the Kinect sensor
 function no_people_seen() {
+    people_seen();
+
     // Text style
     ctx.font = '24px Arial';
     ctx.fillStyle = 'red';
