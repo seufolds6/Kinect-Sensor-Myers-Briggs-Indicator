@@ -140,29 +140,25 @@ start();
 function startCountdown() {
     countdown = COUNTDOWN_LENGTH;
 
-    // Update the countdown every second
+    // Update the countdown
     countdownInterval = setInterval(function() {
-        // Clear the area for the countdown timer
-        ctx.clearRect((canvas.width / 2) - 50, 0, 150, 150);
-
-        // Display the countdown timer in the middle of the top of the canvas
+        // Display the countdown timer
+        ctx.clearRect((canvas.width / 2) - 50, 50, 150, 150);
         ctx.fillStyle = "black";
-        ctx.font = "60px Arial"; // Bigger font size
+        ctx.font = "60px Arial";
         ctx.textAlign = "center";
-        ctx.fillText(countdown, canvas.width / 2, 100); // Adjust the vertical position
+        ctx.fillText(countdown, canvas.width / 2, 100);
 
-        // Decrement the countdown
         countdown--;
 
         // Check if the countdown has reached zero
         if (countdown < 0) {
-            clearInterval(countdownInterval); // Stop the countdown when it reaches zero
-            // Add any action you want to take after the countdown ends here
+            clearInterval(countdownInterval);
         } else if (countdown === 5) {
             // If the countdown reaches 5 seconds, display a prompt message
             displaySubmitPrompt();
         }
-    }, 1000); // Update the countdown every second
+    }, 1000);
 }
 
 // Function to display a prompt message reminding to submit an answer
@@ -180,13 +176,33 @@ function displaySubmitPrompt() {
 
 // Function to reset the countdown
 function resetCountdown() {
-    clearInterval(countdownInterval); // Stop the previous countdown
-    startCountdown(); // Start a new countdown
+    clearInterval(countdownInterval);
+    startCountdown();
+}
+
+// Erase no people seen message if it is there
+function people_seen() {
+    ctx.clearRect(canvas.width / 4, 0, 1000, 60);
+}
+
+// Display a message saying that no people were detected
+// by the Kinect sensor
+function no_people_seen() {
+    // Text style
+    ctx.font = '24px Arial';
+    ctx.fillStyle = 'red';
+    ctx.textAlign = 'center';
+
+    var text = 'You aren\'t detected by the sensor, please come closer';
+    var textX = canvas.width / 2;
+    var textY = 40;
+
+    // Draw text
+    ctx.fillText(text, textX, textY);
 }
 
 // Start the game
 function start() {
-    // Set font properties for the instructions
     var fontSize = 36;
     var font = fontSize + "px Arial";
     ctx.font = font;
@@ -212,7 +228,6 @@ function start() {
     var rectX = (canvas.width - rectWidth) / 2;
     var rectY = (canvas.height - rectHeight / 2) / 2;
 
-    // The blue rectangle
     ctx.beginPath();
     ctx.fillStyle = "blue";
     ctx.roundRect(rectX, rectY, rectWidth, rectHeight, 10);
@@ -263,7 +278,7 @@ function go_to_next(previous_answer = "") {
     ctx.fillStyle = "black";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-
+    
     // Calculate position to center the question
     var question = questions[curr_question].question;
     var textX = canvas.width / 2;
@@ -354,7 +369,6 @@ function show_results() {
     ctx.fillText("  2)  " + result_listing[result][1], boxX + 20, boxY + 110);
     ctx.fillText("  3)  " + result_listing[result][2], boxX + 20, boxY + 140);
 
-    // Display the rectangle with instructions about how to see contacts
     var rectWidth = 500;
     var rectHeight = 130;
     var rectX = (canvas.width - rectWidth) / 2;
@@ -410,6 +424,7 @@ function get_side() {
         }
     }
 }
+
 function get_hand() {
     if (frame && frame.people && frame["people"][0]) {
         // Head height
@@ -507,7 +522,7 @@ canvas.addEventListener("click", function(event) {
         }
     }
 
-    // Go from the results screen to the statistics screen
+    // Go from the results screen to the barcode screen
     if (barcode_flag) {
         var mouseX = event.clientX;
         var mouseY = event.clientY;
@@ -524,7 +539,6 @@ canvas.addEventListener("click", function(event) {
         }
     }
 });
-
 
 const questions = [
     {
@@ -600,17 +614,11 @@ const result_listing = {
                 "spontaneous and flexible"],
 };
 
-const contacts = [
-    {
-        name: "Jane Doe",
-        email: "jane.doe@yale.edu"
-    },
-    {
-        name: "Alicia Jones",
-        email: "alicia.jones@yale.edu"
-    },
-    {
-        name: "Jack Downs",
-        email: "jack.downs@yale.edu"
-    },
-]
+// Function to continuously draw the signal text on the canvas
+function drawSignalText(signal_name, signal, y_pos) {
+    var x_pos = 100;
+    ctx.clearRect(x_pos - 100, y_pos - 50, 250, 150);
+    ctx.fillStyle = "black";
+    ctx.font = "20px Arial";
+    ctx.fillText(signal_name + ": " + signal, x_pos, y_pos);
+}
