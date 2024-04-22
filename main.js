@@ -13,7 +13,16 @@ var q2_flag = false;
 var q3_flag = false;
 var results_flag = false;
 var barcode_flag = false;
+var finished_flag = false;
 var countdown;
+const COUNTDOWN_LENGTH = 15;
+var frame;
+
+var hand_raised = false;
+var standing_on_left = false;
+
+var offset = 0;
+const OFFSET_WAIT = 10;
 
 var frames = {
     socket: null,
@@ -21,26 +30,24 @@ var frames = {
     start: function () {
         var url = "ws://" + host + "/frames";
         frames.socket = new WebSocket(url);
+        // this will get triggered often
+        // effectively a while(1) loop
         frames.socket.onmessage = function (event) {
 
             frames.show(JSON.parse(event.data));
 
-            let frame = JSON.parse(event.data);
+            frame = JSON.parse(event.data);
             
             // If a person is seen, start monitoring their movements
-            if (frame.people && frame["people"][0]) {
+            if (frame && frame.people && frame["people"][0]) {
+                people_seen();
 
-                // Head height
-                var head = frame["people"][0]["joints"][26]["position"]["y"];
-                // LH height
-                var left_hand = frame["people"][0]["joints"][8]["position"]["y"];
-                // RH height
-                var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
-                var hand_raised = left_hand < head || right_hand < head;
+                if (finished_flag) {
+                    console.log("finished");
+                }
 
-                if (!start_flag && barcode_flag && hand_raised) {
+                else if (!start_flag && barcode_flag && hand_raised) {
                     console.log("go to barcode");
-
                     go_to_barcode();
                 }
 
@@ -48,14 +55,13 @@ var frames = {
                     console.log("results");
 
                     show_results();
-                    // barcode_flag = true;
                 }
 
                 else if (!start_flag && q3_flag) {
                     console.log("question 3");
 
                     if (countdown == 0) {
-                        perform_question(frame);
+                        perform_question();
                         results_flag = true;
                     }
                 }
@@ -64,7 +70,7 @@ var frames = {
                     console.log("question 2");
 
                     if (countdown == 0) {
-                        perform_question(frame);
+                        perform_question();
                         q3_flag = true;
                     }
                 }
@@ -73,7 +79,7 @@ var frames = {
                     console.log("question 1");
 
                     if (countdown == 0) {
-                        perform_question(frame);
+                        perform_question();
                         q2_flag = true;
                     }
                 }
@@ -82,7 +88,7 @@ var frames = {
                     console.log("question 0");
 
                     if (countdown == 0) {
-                        perform_question(frame);
+                        perform_question();
                         q1_flag = true;
                     }
                 }
@@ -96,11 +102,23 @@ var frames = {
                     go_to_next();
                 }
             }
+            else {
+                no_people_seen();
+            }
         }
     },
 
-    show: function (frame) {
-        console.log(frame);
+    show: function () {
+        // console.log(frame);
+        if (offset % OFFSET_WAIT == 0) {
+            offset = 0;
+            get_side();
+            get_hand();
+            // debug on the screen
+            // drawSignalText("standing on left", standing_on_left, 50);
+            // drawSignalText("hands raised", hand_raised, 150);
+        }
+        offset += 1;
     }
 };
 
@@ -120,7 +138,7 @@ start();
 
 // Function to start the countdown
 function startCountdown() {
-    countdown = 15; // Initial countdown value in seconds
+    countdown = COUNTDOWN_LENGTH;
 
     // Update the countdown every second
     countdownInterval = setInterval(function() {
@@ -355,7 +373,11 @@ function show_results() {
 
 // Show the screen with the other people who got the same result
 function go_to_barcode() {
+    if (finished_flag) {
+        return;
+    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    finished_flag = true;
 
     // Large centered title
     var titleText = "Scan the barcode to take the survey!";
@@ -377,36 +399,47 @@ function go_to_barcode() {
     };
 }
 
-function perform_question(frame) {
-    console.log("Perform question: ", curr_question);
-
-    // Give them 20 seconds (20000 milliseconds) to choose
-    startCountdown(); // Start the countdown
-
-    // Check if standing to the left or right or hands raised in the middle
-    var standing_on_left = frame["people"][0]["joints"][26]["position"]["x"] > 0;
-    var head = frame["people"][0]["joints"][26]["position"]["y"];
-    var left_hand = frame["people"][0]["joints"][8]["position"]["y"];
-    var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
-    var hand_raised = left_hand < head || right_hand < head;
-
-    // If hands raised in the middle, go to the previous question
-    if (hand_raised) {
-        // Adjust current question index
-        curr_question -= 1;
-        if (curr_question < 0) curr_question = 0; // Ensure not to go below the first question
-        // Clear canvas and go to the previous question
-        go_to_next();
-    } else {
-        // Otherwise, proceed with selecting the choice based on their position
-        if (standing_on_left) {
-            select_choice(true);
+function get_side() {
+    if (frame && frame.people && frame["people"][0]) {
+        if (frame["people"][0]["joints"][26]["position"]["x"] > 0) {
+            console.log("standing on left");
+            standing_on_left = true;
         } else {
-            select_choice(false);
+            console.log("standing on right");
+            standing_on_left = false;
+        }
+    }
+}
+function get_hand() {
+    if (frame && frame.people && frame["people"][0]) {
+        // Head height
+        var head = frame["people"][0]["joints"][26]["position"]["y"];
+        // LH height
+        var left_hand = frame["people"][0]["joints"][8]["position"]["y"];
+        // RH height
+        var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
+        hand_raised = left_hand < head || right_hand < head;
+        if (hand_raised) {
+            console.log("hand raised")
         }
     }
 }
 
+function perform_question() {
+    console.log("Perform question: ", curr_question);
+
+    // Give them 20 seconds (20000 milliseconds) to choose
+    startCountdown();
+
+    // Select the choice based on their position
+    if (standing_on_left) {
+        select_choice(true);
+    } else {
+        select_choice(false);
+    }
+}
+
+// Select either choice 1 or choice 2
 function select_choice(choice_1) {
     if (choice_1) {
         var selected = questions[curr_question].choices[0];
@@ -419,7 +452,7 @@ function select_choice(choice_1) {
 
     if (curr_question > 3) {
         console.log("Question number out of range")
-        show_results()
+        // show_results()
         return
     }
 
