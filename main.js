@@ -13,8 +13,15 @@ var q3_flag = false;
 var results_flag = false;
 var barcode_flag = false;
 var finished_flag = false;
+
 var countdown;
+var curr_question = 0;
+var results = [];
+var countdownInterval;
+
 const COUNTDOWN_LENGTH = 15;
+const DELAY_BEFORE_HAND_RAISE = COUNTDOWN_LENGTH - 3;
+
 var frame;
 
 var hand_raised = false;
@@ -36,69 +43,71 @@ var frames = {
             frames.show(JSON.parse(event.data));
 
             frame = JSON.parse(event.data);
+
+            hand_raised_and_done_delay = hand_raised && countdown < DELAY_BEFORE_HAND_RAISE;
             
             // If a person is seen, start monitoring their movements
             if (frame && frame.people && frame["people"][0]) {
                 people_seen();
 
-                if (finished_flag) {
-                    console.log("finished");
+
+                if (results_flag) {
+                    // console.log("go to barcode");
+
+                    if (hand_raised_and_done_delay) {
+                        go_to_barcode();
+                        resetCountdown();
+                    }
                 }
 
-                else if (!start_flag && barcode_flag && hand_raised) {
-                    console.log("go to barcode");
-                    go_to_barcode();
-                }
+                else if (q3_flag) {
+                    // console.log("question 3");
 
-                else if (!start_flag && results_flag) {
-                    console.log("results");
-
-                    show_results();
-                }
-
-                else if (!start_flag && q3_flag) {
-                    console.log("question 3");
-
-                    if (countdown == 0) {
+                    if (hand_raised_and_done_delay) {
                         perform_question();
                         results_flag = true;
+                        resetCountdown();
                     }
                 }
 
-                else if (!start_flag && q2_flag) {
-                    console.log("question 2");
+                else if (q2_flag) {
+                    // console.log("question 2");
 
-                    if (countdown == 0) {
+                    if (hand_raised_and_done_delay) {
                         perform_question();
                         q3_flag = true;
+                        resetCountdown();
                     }
                 }
 
-                else if (!start_flag && q1_flag) {
-                    console.log("question 1");
+                else if (q1_flag) {
+                    // console.log("question 1");
 
-                    if (countdown == 0) {
+                    if (hand_raised_and_done_delay) {
                         perform_question();
                         q2_flag = true;
+                        resetCountdown();
                     }
                 }
 
-                else if (!start_flag && q0_flag) {
-                    console.log("question 0");
+                else if (q0_flag) {
+                    // console.log("question 0");
 
-                    if (countdown == 0) {
+                    if (hand_raised_and_done_delay) {
                         perform_question();
                         q1_flag = true;
+                        resetCountdown();
                     }
                 }
 
                 // If on the start screen and hand is raised, go to first question
                 else if (start_flag && hand_raised) {
-                    console.log("on start screen, hand is raised");
+                    // console.log("on start screen, hand is raised");
 
                     start_flag = false;
                     q0_flag = true;
                     go_to_next();
+                    resetCountdown();
                 }
             }
             else {
@@ -121,11 +130,6 @@ var frames = {
     }
 };
 
-var curr_question = 0;
-var results = [];
-var countdown;
-var countdownInterval;
-
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 
@@ -137,6 +141,7 @@ start();
 
 // Function to start the countdown
 function startCountdown() {
+    // console.log("started countdown");
     countdown = COUNTDOWN_LENGTH;
 
     // Update the countdown
@@ -148,12 +153,11 @@ function startCountdown() {
         ctx.textAlign = "center";
         ctx.fillText(countdown, canvas.width / 2, 100);
 
-        countdown--;
+        if (countdown > 0) {
+            countdown--;
+        }
 
-        // Check if the countdown has reached zero
-        if (countdown < 0) {
-            clearInterval(countdownInterval);
-        } else if (countdown === 5) {
+        if (countdown === 5) {
             // If the countdown reaches 5 seconds, display a prompt message
             displaySubmitPrompt();
         }
@@ -175,6 +179,7 @@ function displaySubmitPrompt() {
 
 // Function to reset the countdown
 function resetCountdown() {
+    console.log("resetting");
     clearInterval(countdownInterval);
     startCountdown();
 }
@@ -254,9 +259,10 @@ function start() {
 
 // Go to the next question
 function go_to_next(previous_answer = "") {
+    console.log("called go_to_next, previous_answer:");
+    console.log(previous_answer);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.clearRect(canvas.width - 100, 0, 100, 50);
-    clearInterval(countdownInterval);
 
     // If previous_answer is empty, go to the previous question
     if (previous_answer === "") {
@@ -337,14 +343,11 @@ function go_to_next(previous_answer = "") {
     ctx.clearRect(0, canvas.height - 115, canvas.width, 50);
     // Display the updated instruction
     ctx.fillText(lineText2, canvas.width / 2, canvas.height - 100);
-
-    resetCountdown();
 }
 
 
 // Show the personality test results
 function show_results() {
-    clearInterval(countdownInterval);
     barcode_flag = true;
     var result = results.join("");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -417,10 +420,10 @@ function go_to_barcode() {
 function get_side() {
     if (frame && frame.people && frame["people"][0]) {
         if (frame["people"][0]["joints"][26]["position"]["x"] > 0) {
-            console.log("standing on left");
+            // console.log("standing on left");
             standing_on_left = true;
         } else {
-            console.log("standing on right");
+            // console.log("standing on right");
             standing_on_left = false;
         }
     }
@@ -435,9 +438,9 @@ function get_hand() {
         // RH height
         var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
         hand_raised = left_hand < head || right_hand < head;
-        if (hand_raised) {
-            console.log("hand raised")
-        }
+        // if (hand_raised_and_done_delay) {
+        //     console.log("hand raised")
+        // }
     }
 }
 
@@ -445,7 +448,6 @@ function perform_question() {
     console.log("Perform question: ", curr_question);
 
     // Give them 20 seconds (20000 milliseconds) to choose
-    startCountdown();
 
     // Select the choice based on their position
     if (standing_on_left) {
@@ -468,7 +470,7 @@ function select_choice(choice_1) {
 
     if (curr_question > 3) {
         console.log("Question number out of range")
-        // show_results()
+        show_results()
         return
     }
 
