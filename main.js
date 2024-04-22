@@ -12,7 +12,6 @@ var q2_flag = false;
 var q3_flag = false;
 var results_flag = false;
 var barcode_flag = false;
-var finished_flag = false;
 var barcode_flag = false;
 
 var countdown;
@@ -417,11 +416,7 @@ function show_results() {
 
 // Show the screen with the other people who got the same result
 function go_to_barcode() {
-    if (finished_flag) {
-        return;
-    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    finished_flag = true;
 
     // Large centered title
     var titleText = "Scan the barcode to take the survey!";
