@@ -29,7 +29,10 @@ const COUNTDOWN_TIME_PROMPT = 5;
 var frame;
 
 var hand_raised = false;
+var both_hands_raised = false;
 var standing_on_left = false;
+var hand_raised_duration = 0;
+const REQUIRED_RAISE_DURATION = 30; // 30 frames (assuming frame rate is 30fps) corresponds to 1 second
 var highlightX;
 
 var offset = 0;
@@ -462,10 +465,43 @@ function get_hand() {
         var left_hand = frame["people"][0]["joints"][8]["position"]["y"];
         // RH height
         var right_hand = frame["people"][0]["joints"][15]["position"]["y"];
+        
+        // Check if both hands are raised
+        both_hands_raised = left_hand < head && right_hand < head;
         hand_raised = left_hand < head || right_hand < head;
-        // if (hand_raised_and_done_delay) {
-        //     console.log("hand raised")
-        // }
+
+        // Update hand raised duration
+        if (both_hands_raised || hand_raised) {
+            hand_raised_duration++;
+        } else {
+            hand_raised_duration = 0; // Reset duration if hands are not raised
+        }
+
+        // Check if hand has been raised for required duration
+        if (hand_raised_duration >= REQUIRED_RAISE_DURATION && both_hands_raised) {
+            // Perform action based on the current state
+            if (barcode_flag) {
+                // If on the barcode screen, restart the game
+                location.reload();
+            } else if (results_flag) {
+                // If on the results screen, go to the barcode screen
+                go_to_barcode();
+                barcode_flag = true;
+                resetCountdown();
+            } else {
+                // If on a question screen, confirm the answer
+                previous_answer = "";
+                go_to_next();
+            }
+            
+            // Reset hand raised duration
+            hand_raised_duration = 0;
+        }
+
+        else if (hand_raised_duration >= REQUIRED_RAISE_DURATION && hand_raised) {
+            perform_question();
+            hand_raised_duration = 0;
+        }
     }
 }
 
