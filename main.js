@@ -68,6 +68,13 @@ var frames = {
             if (frame && frame.people && frame["people"][0]) {
                 people_seen();
 
+                if (hand_raised) {
+                    displayHandRaiseSignal();
+                }
+                else {
+                    ctx.clearRect(canvas.width / 2, canvas.height - 40)
+                }
+
                 if (barcode_flag) {
                     // console.log("restarting");
 
@@ -152,6 +159,12 @@ var frames = {
             if (!results_flag && (q0_flag || q1_flag || q2_flag || q3_flag)) {
                 drawQuestionBoxes(previous_answer);
             }
+            else if (!barcode_flag && results_flag) {
+                show_results();
+            }
+            else if (barcode_flag) {
+                go_to_barcode();
+            }
 
             // Debug: display left/right, hand states
             // drawSignalText("standing on left", standing_on_left, 50);
@@ -197,6 +210,17 @@ function displaySubmitPrompt() {
     ctx.font = "24px Arial";
     ctx.textAlign = "center";
     ctx.fillText("Move left or right, then raise your hand to confirm answer!", canvas.width / 2, canvas.height - 60);
+}
+
+function displayHandRaiseSignal() {
+    // Clear previous prompt if any
+    ctx.clearRect(0, canvas.height - 50, canvas.width, 50);
+
+    // Display the prompt message
+    ctx.fillStyle = "red";
+    ctx.font = "24px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Keep Hand Raised to Select Answer", canvas.width / 2, canvas.height - 40);
 }
 
 
@@ -442,7 +466,7 @@ function go_to_barcode() {
     
     // Display instruction to restart game
     ctx.fillStyle = "black";
-    ctx.fillText("Raise hand to restart the game", canvas.width / 2, canvas.height - 60);
+    ctx.fillText("Raise hand to restart the game", canvas.width / 2, canvas.height - 80);
 }
 
 function get_side() {
