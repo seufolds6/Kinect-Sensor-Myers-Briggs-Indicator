@@ -78,7 +78,7 @@ var frames = {
                 if (barcode_flag) {
                     // console.log("restarting");
 
-                    if (hand_raised_and_done_delay) {
+                    if (countdown === 0 || hand_raised_and_done_delay) {
                         // restart the game
                         location.reload();
                     }
@@ -86,7 +86,7 @@ var frames = {
                 else if (results_flag) {
                     // console.log("go to barcode");
 
-                    if (hand_raised_and_done_delay) {
+                    if (countdown === 0 || hand_raised_and_done_delay) {
                         go_to_barcode();
                         barcode_flag = true;
                         resetCountdown();
