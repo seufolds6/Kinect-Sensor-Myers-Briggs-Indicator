@@ -101,8 +101,14 @@ var frames = {
                         resetCountdown();
                     }
                 }
+                else if (both_hands_raised_long_enough) {
+                    // go to past answer in quiz
+                    previous_answer = "";
+                    go_to_next();
+                    resetCountdown();
+                }
 
-                else if (q3_flag) {
+                else if (curr_question == 3) {
                     if (hand_raised_long_enough) {
                         perform_question();
                         results_flag = true;
@@ -110,26 +116,23 @@ var frames = {
                     }
                 }
 
-                else if (q2_flag) {
+                else if (curr_question == 2) {
                     if (hand_raised_long_enough) {
                         perform_question();
-                        q3_flag = true;
                         resetCountdown();
                     }
                 }
 
-                else if (q1_flag) {
+                else if (curr_question == 1) {
                     if (hand_raised_long_enough) {
                         perform_question();
-                        q2_flag = true;
                         resetCountdown();
                     }
                 }
 
-                else if (q0_flag) {
+                else if (!start_flag && curr_question == 0) {
                     if (hand_raised_long_enough) {
                         perform_question();
-                        q1_flag = true;
                         resetCountdown();
                     }
                 }
@@ -139,7 +142,6 @@ var frames = {
 
                     if (hand_raised_long_enough) {
                         start_flag = false;
-                        q0_flag = true;
                         go_to_next();
                         resetCountdown();
                     }
@@ -157,7 +159,7 @@ var frames = {
             get_side();
             get_hand();
 
-            if (!results_flag && (q0_flag || q1_flag || q2_flag || q3_flag)) {
+            if (!results_flag && !start_flag && (curr_question < 4)) {
                 drawQuestionBoxes(previous_answer);
             }
             // else if (!barcode_flag && results_flag) {
@@ -394,8 +396,10 @@ function go_to_next() {
     // If previous_answer is empty, go to the previous question
     if (previous_answer === "") {
         curr_question -= 1;
+        results.pop();
         if (curr_question < 0) curr_question = 0; // Ensure not to go below the first question
     }
+    console.log(results);
 }
 
 
