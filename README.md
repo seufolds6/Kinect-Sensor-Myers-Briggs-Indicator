@@ -11,10 +11,11 @@ To run, copy the `index.html` filepath into your local browser. Make sure you ar
 
 ## Problem Space and Tasks
 
-This project targets the problem space of fostering self-understanding and resilience among students on campus to alleviate stress that derives from imposter syndrome, a feeling of inadequacy, and self-comparison with peers. The two tasks address
+This project targets the problem space of fostering self-understanding and resilience among students on campus to alleviate stress that derives from imposter syndrome, a feeling of inadequacy, and self-comparison with peers. 
 
-Identifying what one’s greatest strengths are.
-Visualizing pleasant locations/scenarios to take one’s mind off the stressors and anxiety in one’s life.
+The two tasks address:
+- Identifying what one’s greatest strengths are.
+- Visualizing pleasant locations/scenarios to take one’s mind off the stressors and anxiety in one’s life.
 
 ## Constraints
 
