@@ -1,4 +1,4 @@
-*Conoscere Sé* - Know Oneself
+# *Conoscere Sé* - Know Oneself
 
 Group 13: Sophie Usherwood, David Peng, Nathan Wu, Edward Liau
 
