@@ -22,21 +22,24 @@ var previous_answer = "";
 var results = [];
 var countdownInterval;
 
-const COUNTDOWN_INITIAL = 10;
-const COUNTDOWN_TIME_HANDRAISE = COUNTDOWN_INITIAL - 2;
+const COUNTDOWN_INITIAL = 15;
+const COUNTDOWN_TIME_HANDRAISE = COUNTDOWN_INITIAL - 1;
 const COUNTDOWN_TIME_PROMPT = 5;
 
 var frame;
 
 var hand_raised = false;
 var both_hands_raised = false;
+var hand_raised_long_enough = false;
+var both_hands_raised_long_enough = false;
+
 var standing_on_left = false;
 var hand_raised_duration = 0;
-const REQUIRED_RAISE_DURATION = 30; // 30 frames (assuming frame rate is 30fps) corresponds to 1 second
+const REQUIRED_RAISE_DURATION = 20;
 var highlightX;
 
 var offset = 0;
-const OFFSET_WAIT = 10;
+const OFFSET_WAIT = 1;
 
 var frames = {
     socket: null,
@@ -51,8 +54,6 @@ var frames = {
             frames.show(JSON.parse(event.data));
 
             frame = JSON.parse(event.data);
-
-            hand_raised_and_done_delay = hand_raised && countdown < COUNTDOWN_TIME_HANDRAISE;
             
             // If a person is seen, start monitoring their movements
             /*
@@ -65,28 +66,36 @@ var frames = {
                 else if state 0
                 -- if hand up, change state and start the game
             */
+
+            // Update hand raised duration
+            if ((both_hands_raised || hand_raised) && countdown < COUNTDOWN_TIME_HANDRAISE) {
+                hand_raised_duration++;
+            } else {
+                hand_raised_duration = 0; // Reset duration if hands are not raised
+            }
+
+            hand_raised_long_enough = hand_raised && hand_raised_duration >= REQUIRED_RAISE_DURATION;
+            both_hands_raised_long_enough = both_hands_raised && hand_raised_duration >= REQUIRED_RAISE_DURATION;
+
+            // console.log(hand_raised_duration);
             if (frame && frame.people && frame["people"][0]) {
                 people_seen();
 
-                if (hand_raised) {
+                if (hand_raised && countdown < COUNTDOWN_TIME_HANDRAISE) {
                     displayHandRaiseSignal();
                 }
                 else {
-                    ctx.clearRect(canvas.width / 2, canvas.height - 40)
+                    ctx.clearRect(0, canvas.height - 60, canvas.width, 50);
                 }
 
                 if (barcode_flag) {
-                    // console.log("restarting");
-
-                    if (countdown === 0 || hand_raised_and_done_delay) {
+                    if (countdown === 0 || hand_raised_long_enough) {
                         // restart the game
                         location.reload();
                     }
                 }
                 else if (results_flag) {
-                    // console.log("go to barcode");
-
-                    if (countdown === 0 || hand_raised_and_done_delay) {
+                    if (countdown === 0 || hand_raised_long_enough) {
                         go_to_barcode();
                         barcode_flag = true;
                         resetCountdown();
@@ -94,9 +103,7 @@ var frames = {
                 }
 
                 else if (q3_flag) {
-                    // console.log("question 3");
-
-                    if (hand_raised_and_done_delay) {
+                    if (hand_raised_long_enough) {
                         perform_question();
                         results_flag = true;
                         resetCountdown();
@@ -104,9 +111,7 @@ var frames = {
                 }
 
                 else if (q2_flag) {
-                    // console.log("question 2");
-
-                    if (hand_raised_and_done_delay) {
+                    if (hand_raised_long_enough) {
                         perform_question();
                         q3_flag = true;
                         resetCountdown();
@@ -114,9 +119,7 @@ var frames = {
                 }
 
                 else if (q1_flag) {
-                    // console.log("question 1");
-
-                    if (hand_raised_and_done_delay) {
+                    if (hand_raised_long_enough) {
                         perform_question();
                         q2_flag = true;
                         resetCountdown();
@@ -124,9 +127,7 @@ var frames = {
                 }
 
                 else if (q0_flag) {
-                    // console.log("question 0");
-
-                    if (hand_raised_and_done_delay) {
+                    if (hand_raised_long_enough) {
                         perform_question();
                         q1_flag = true;
                         resetCountdown();
@@ -134,13 +135,14 @@ var frames = {
                 }
 
                 // If on the start screen and hand is raised, go to first question
-                else if (start_flag && hand_raised) {
-                    // console.log("on start screen, hand is raised");
+                else if (start_flag) {
 
-                    start_flag = false;
-                    q0_flag = true;
-                    go_to_next();
-                    resetCountdown();
+                    if (hand_raised_long_enough) {
+                        start_flag = false;
+                        q0_flag = true;
+                        go_to_next();
+                        resetCountdown();
+                    }
                 }
             }
             else {
@@ -150,7 +152,6 @@ var frames = {
     },
 
     show: function () {
-        // console.log(frame);
         if (offset % OFFSET_WAIT == 0) {
             offset = 0;
             get_side();
@@ -159,12 +160,12 @@ var frames = {
             if (!results_flag && (q0_flag || q1_flag || q2_flag || q3_flag)) {
                 drawQuestionBoxes(previous_answer);
             }
-            else if (!barcode_flag && results_flag) {
-                show_results();
-            }
-            else if (barcode_flag) {
-                go_to_barcode();
-            }
+            // else if (!barcode_flag && results_flag) {
+            //     show_results();
+            // }
+            // else if (barcode_flag) {
+            //     go_to_barcode();
+            // }
 
             // Debug: display left/right, hand states
             // drawSignalText("standing on left", standing_on_left, 50);
@@ -185,7 +186,6 @@ start();
 
 // Function to start the countdown
 function startCountdown() {
-    // console.log("started countdown");
     countdown = COUNTDOWN_INITIAL;
 
     // Update the countdown
@@ -203,13 +203,13 @@ function startCountdown() {
 // Function to display a prompt message reminding to submit an answer
 function displaySubmitPrompt() {
     // Clear previous prompt if any
-    ctx.clearRect(0, canvas.height - 50, canvas.width, 50);
+    ctx.clearRect(0, canvas.height - 80, canvas.width, 50);
 
     // Display the prompt message
     ctx.fillStyle = "red";
     ctx.font = "24px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("Move left or right, then raise your hand to confirm answer!", canvas.width / 2, canvas.height - 60);
+    ctx.fillText("Move left or right, then raise your hand to confirm answer!", canvas.width / 2, canvas.height - 80);
 }
 
 function displayHandRaiseSignal() {
@@ -226,7 +226,7 @@ function displayHandRaiseSignal() {
 
 // Function to reset the countdown
 function resetCountdown() {
-    console.log("resetting");
+    hand_raised_duration = 0;
     clearInterval(countdownInterval);
     startCountdown();
 }
@@ -256,6 +256,7 @@ function no_people_seen() {
 
 // Start the game
 function start() {
+    startCountdown();
     var fontSize = 36;
     var font = fontSize + "px Arial";
     ctx.font = font;
@@ -373,7 +374,6 @@ function drawQuestionBoxes() {
         else {
             highlightX = falseX;
         }
-        console.log(highlightX);
         ctx.lineWidth = 5; // Set the line width for the border
         ctx.strokeStyle = "red"; // Set the stroke color to a brighter blue
         ctx.roundRect(highlightX, rectY, rectWidth, rectHeight, 10); // Redraw the rounded rectangle for the border
@@ -472,10 +472,8 @@ function go_to_barcode() {
 function get_side() {
     if (frame && frame.people && frame["people"][0]) {
         if (frame["people"][0]["joints"][26]["position"]["x"] > 0) {
-            // console.log("standing on left");
             standing_on_left = true;
         } else {
-            // console.log("standing on right");
             standing_on_left = false;
         }
     }
@@ -493,39 +491,6 @@ function get_hand() {
         // Check if both hands are raised
         both_hands_raised = left_hand < head && right_hand < head;
         hand_raised = left_hand < head || right_hand < head;
-
-        // Update hand raised duration
-        if (both_hands_raised || hand_raised) {
-            hand_raised_duration++;
-        } else {
-            hand_raised_duration = 0; // Reset duration if hands are not raised
-        }
-
-        // Check if hand has been raised for required duration
-        if (hand_raised_duration >= REQUIRED_RAISE_DURATION && both_hands_raised) {
-            // Perform action based on the current state
-            if (barcode_flag) {
-                // If on the barcode screen, restart the game
-                location.reload();
-            } else if (results_flag) {
-                // If on the results screen, go to the barcode screen
-                go_to_barcode();
-                barcode_flag = true;
-                resetCountdown();
-            } else {
-                // If on a question screen, confirm the answer
-                previous_answer = "";
-                go_to_next();
-            }
-            
-            // Reset hand raised duration
-            hand_raised_duration = 0;
-        }
-
-        else if (hand_raised_duration >= REQUIRED_RAISE_DURATION && hand_raised) {
-            perform_question();
-            hand_raised_duration = 0;
-        }
     }
 }
 
